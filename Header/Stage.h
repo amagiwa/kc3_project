@@ -25,25 +25,26 @@ namespace stg {
 	private:
 		Vec2 size;
 		Vec2 position;
-		Player *player;
-		Enemy *enemy;
-		Shot *shot[100];
-		Bullet *bullet[100];
+		Player* player;
+		Enemy* enemy;
+		Shot* shot[100];
+		Bullet* bullet[100];
 		Manager* manager;
 		Array<Object*> array;
-		int playerState;
-		double playerSpeed;
-		int interval;
 		int timing;
+		int timingRadical;
+		int interval;
 		Polygon flame;
 		struct AreaInfo areaInfo;
 	public:
+		Stage() = default;
 		Stage(Vec2, Vec2);
 		~Stage();
-		void shotLaunch();
-		void shotCollision();
-		void bulletLaunch();
-		void moveBullet();
+		Vec2 getPlayerPosition();
+		Vec2 getEnemyPosition();
+		Array<Vec2> getBulletsPosition();
+		Array<Vec2> getBulletsVelocity();
+		void movePlayer(int, int, bool);
 		void update();
 		inline AreaInfo getAreaInfo() const {
 			return areaInfo;

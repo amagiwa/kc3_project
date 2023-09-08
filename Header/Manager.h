@@ -1,7 +1,7 @@
 ﻿#pragma once
-#include"Object.h"
-#include"HitBody.h"
-#include"Character.h"
+#include"Player.h"
+#include"Shot.h"
+#include"Bullet.h"
 
 namespace stg {
 	class Manager {
@@ -20,6 +20,20 @@ namespace stg {
 		void solvePosition(Object*);
 		bool checkCollision(HitBody*, HitBody*);
 		void randomMove(Character*);
-		void userMove(Character*);
+		void movePlayer(Player*, int, int, bool);
+		void userMove(Player*);
+		void shootShot(Player*, Shot* []);
+
+		void objectInitialize(Object*, Vec2);
+		void objectDraw(Array<Object*>);
+		bool objectCollision(Object*, Object*);
+		void objectMoveToTarget(Object*, Vec2);
+
+		bool shotLaunch(Shot*, Object*);
+		void shotCollision(Shot*, Object*);
+
+		bool bulletLaunch(Bullet*, Object*, Object*);
+		void bulletLaunchRadical(Bullet* [], int, Object*);
+		void bulletCollision(Bullet*, Object*);
 	};
 }
