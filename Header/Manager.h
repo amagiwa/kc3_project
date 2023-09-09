@@ -1,7 +1,10 @@
 ﻿#pragma once
+#include"Object.h"
+#include"Character.h"
 #include"Player.h"
 #include"Shot.h"
 #include"Bullet.h"
+#include"Hitbody.h"
 
 namespace stg {
 	class Manager {
@@ -16,24 +19,28 @@ namespace stg {
 		~Manager() = default;
 		void update(Array<Object*>);
 		void render(Array<Object*>);
+
+		float lengthVector(Vec2);
+		void normalizeVector(Vec2*);
+		void initializeObject(Object*, Vec2);
 		void collectObject(Object*);
 		void solvePosition(Object*);
-		bool checkCollision(HitBody*, HitBody*);
-		void randomMove(Character*);
+		bool checkCollision(HitBody, HitBody);
+
 		void movePlayer(Player*, int, int, bool);
-		void userMove(Player*);
-		void shootShot(Player*, Shot* []);
+		void moveUser(Player*);
+		bool moveToTarget(Object*, Vec2);
+		void randomMove(Character*);
 
-		void objectInitialize(Object*, Vec2);
-		void objectDraw(Array<Object*>);
-		bool objectCollision(Object*, Object*);
-		void objectMoveToTarget(Object*, Vec2);
+		bool shootShot(Player*, Shot* []);
+		bool collideShotVsObject(Shot*, Object*);
 
-		bool shotLaunch(Shot*, Object*);
-		void shotCollision(Shot*, Object*);
+		bool shootBullet(Bullet*, Object*, Object*);
+		void shootBulletRadical(Bullet* [], int, Object*);
+		bool collideBulletVsObject(Bullet*, Object*);
 
-		bool bulletLaunch(Bullet*, Object*, Object*);
-		void bulletLaunchRadical(Bullet* [], int, Object*);
-		void bulletCollision(Bullet*, Object*);
+		bool shotLaunch(Shot*, Object*);//使わない
+		bool objectCollision(Object*, Object*);//使わない
+		void objectDraw(Array<Object*>);//使わない
 	};
 }

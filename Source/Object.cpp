@@ -15,6 +15,7 @@ Object::Object() {
 void Object::update() {
 	velocity += acceleration;
 	position += velocity;
+	hitBody->update(position);
 }
 
 void Object::render() {}

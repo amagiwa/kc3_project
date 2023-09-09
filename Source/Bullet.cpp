@@ -5,7 +5,7 @@ Bullet::Bullet(Vec2 pos) {
 	this->position = pos;
 	size = Vec2{ 32,32 };
 	texture = Circle{ position, size.x / 2 };
-	hitBody = new HitBody(size.x / 2);
+	hitBody = new HitBody(size.x / 4);
 	//Object::texture = Texture{ U"../bullet.png" };
 	color = Palette::Orange;
 }

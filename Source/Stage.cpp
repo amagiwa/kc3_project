@@ -45,6 +45,8 @@ Stage::Stage(Vec2 s, Vec2 pos) {
 	timing = 0;
 	timingRadical = 0;
 	interval = 0;
+	playerDamage = 0;
+	enemyDamage = 0;
 }
 
 Stage::~Stage() {
@@ -54,7 +56,7 @@ Stage::~Stage() {
 }
 
 void Stage::update() {
-	manager->userMove(player);
+	manager->moveUser(player);
 	manager->update(array);
 	manager->solvePosition(player);
 	manager->render(array);
@@ -65,37 +67,43 @@ void Stage::update() {
 
 	if (++timing > 100) {
 		for (auto i: step(sizeof bullet/sizeof bullet[0])) {
-			if (manager->bulletLaunch(bullet[i], enemy, player))break;
+			if (manager->shootBullet(bullet[i], enemy, player))break;
 		}
 		timing = 0;
 	}
 
 	if (++timingRadical > 50) {
-		manager->bulletLaunchRadical(bullet, sizeof bullet / sizeof bullet[0], enemy);
+		manager->shootBulletRadical(bullet, sizeof bullet / sizeof bullet[0], enemy);
 		timingRadical = 0;
 	}
 
 	for (auto i : step(sizeof bullet / sizeof bullet[0])) {
-		manager->bulletCollision(bullet[i], player);
+		if (manager->collideBulletVsObject(bullet[i], player)) {
+			++playerDamage;
+		}
+	}
+
+	for (auto i : step(sizeof shot / sizeof shot[0])) {
+		if (manager->collideShotVsObject(shot[i], enemy)) {
+			++enemyDamage;
+		}
 	}
 
 	if (KeyZ.pressed()) {
-		if (++interval % 3 == 0) {
-			for (auto i : step(sizeof shot / sizeof shot[0])) {
-				if (manager->shotLaunch(shot[i], player))break;
-			}
+		if (++interval % 3 == 0){
+			manager->shootShot(player, shot);
 		}
 	}
 	else {
 		interval = 0;
 	}
 
-	for (auto i : step(sizeof shot / sizeof shot[0])) {
-		manager->shotCollision(shot[i], enemy);
-	};
-
 	flame.draw(Palette::Navy);
-	Print << U"a";
+	disp(U"被弾回数\nPlayer: ",playerDamage)
+		.draw(areaInfo.right + 30, areaInfo.center.y - 30);
+	disp(U"Enemy: ", enemyDamage)
+		.draw(areaInfo.right + 30, areaInfo.center.y + 50);
+	//Print << U"a";
 }
 
 Vec2 Stage::getPlayerPosition() {
@@ -106,26 +114,83 @@ Vec2 Stage::getEnemyPosition() {
 	return enemy->getPosition();
 }
 
-Array<Vec2> Stage::getBulletsPosition() {
-	Array<Vec2> ary;
+Vec2 Stage::getNearestBulletPosition() {
+	float min = 10000.0f;
+	const Vec2 pPos = player->getPosition();
+	Vec2 nPos = pPos;
 	for (auto i : step(sizeof bullet / sizeof bullet[0])) {
 		if (bullet[i]->getIsActive()) {
-			ary << bullet[i]->getPosition();
+			if (min > manager->lengthVector(
+				bullet[i]->getPosition() - pPos)) {
+				min = manager->lengthVector(
+				bullet[i]->getPosition() - pPos);
+				nPos = bullet[i]->getPosition();
+			}
 		}
 	}
-	return ary;
+	return nPos;
 }
 
-Array<Vec2> Stage::getBulletsVelocity() {
-	Array<Vec2> ary;
+Vec2 Stage::getNearestBulletVelocity() {
+	float min = 10000.0f;
+	const Vec2 pPos = player->getPosition();
+	Vec2 nVel = pPos;
 	for (auto i : step(sizeof bullet / sizeof bullet[0])) {
 		if (bullet[i]->getIsActive()) {
-			ary << bullet[i]->getVelocity();
+			if (min > manager->lengthVector(
+				bullet[i]->getPosition() - pPos)) {
+				min = manager->lengthVector(
+				bullet[i]->getPosition() - pPos);
+				nVel = bullet[i]->getVelocity();
+			}
 		}
 	}
-	return ary;
+	return nVel;
 }
 
 void Stage::movePlayer(int hor, int ver, bool isShift) {
 	manager->movePlayer(player, hor, ver, isShift);
 }
+
+void Stage::shootShot() {
+	static int count = 0;
+	if (++count % 3 == 0) {
+		count = 0;
+		manager->shootShot(player, shot);
+	}
+}
+
+void Stage::moveEnemyRandom() {
+	static Vec2 pos = Vec2{
+		Random(areaInfo.left + 50,areaInfo.right - 50),
+		Random(areaInfo.upper + 50,areaInfo.lower - 50)
+	};
+	if (manager->moveToTarget(enemy, pos)) {
+		pos = Vec2{
+			Random(areaInfo.left + 50,areaInfo.right - 50),
+			Random(areaInfo.upper + 50,areaInfo.lower - 50)
+		};
+	}
+}
+
+//
+//Array<Vec2> Stage::getBulletsPosition() {
+//	Array<Vec2> ary;
+//	for (auto i : step(sizeof bullet / sizeof bullet[0])) {
+//		if (bullet[i]->getIsActive()) {
+//			ary << bullet[i]->getPosition();
+//		}
+//	}
+//	return ary;
+//}
+//
+//Array<Vec2> Stage::getBulletsVelocity() {
+//	Array<Vec2> ary;
+//	for (auto i : step(sizeof bullet / sizeof bullet[0])) {
+//		if (bullet[i]->getIsActive()) {
+//			ary << bullet[i]->getVelocity();
+//		}
+//	}
+//	return ary;
+//}
+//

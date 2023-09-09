@@ -9,4 +9,5 @@ HitBody::HitBody(float s) {
 
 void HitBody::update(Vec2 pos) {
 	position = pos;
+	body = Circle{ position,size };
 }

@@ -2,7 +2,7 @@
 using namespace stg;
 
 Shot::Shot(Vec2 pos) {
-	size = Vec2{ 16,8 };
+	size = Vec2{ 32,16 };
 	position = pos;
 	texture = Triangle{
 		Vec2{position.x - size.x / 2, position.y + size.y / 2},

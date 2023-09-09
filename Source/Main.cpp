@@ -5,8 +5,11 @@ Stage* stage;
 
 Vec2 getPlayerPosition();
 Vec2 getEnemyPosition();
-Array<Vec2> getBulletsPosition();
-Array<Vec2> getBulletsVelocity();
+Vec2 getNearestBulletPosition();
+Vec2 getNearestBulletVelocity();
+void movePlayer(int, int, bool);
+void shootShot();
+void moveEnemyRandom();
 void Regist(AngelScript::asIScriptEngine*);
 
 //ウィンドウサイズ800×600
@@ -18,7 +21,8 @@ void Main()
 	stage = new Stage(Vec2{ 500,500 }, Vec2{ 50,50 });
 
 	Regist(Script::GetEngine());
-	ManagedScript ai(U"../ai.as");
+	//ManagedScript ai(U"../ai.as");
+	ManagedScript ai(U"ai.as");
 	//auto main = ai.getFunction<void()>(U"Main");
 
 	//Stage stage;
@@ -29,8 +33,8 @@ void Main()
 
 	while (System::Update())
 	{
-		ai.run();
 		stage->update();
+		ai.run();
 		while (sw.msF() < 1000.0 / FPS);
 		sw.restart();
 	}
@@ -44,23 +48,36 @@ Vec2 getEnemyPosition() {
 	return stage->getEnemyPosition();
 }
 
-Array<Vec2> getBulletsPosition() {
-	return stage->getBulletsPosition();
+Vec2 getNearestBulletPosition() {
+	return stage->getNearestBulletPosition();
 }
 
-Array<Vec2> getBulletsVelocity() {
-	return stage->getBulletsVelocity();
+Vec2 getNearestBulletVelocity() {
+	return stage->getNearestBulletVelocity();
 }
 
-//TODO: Playerをスクリプトで動かすこと
+void movePlayer(int dx, int dy, bool isShift) {
+	stage->movePlayer(dx, dy, isShift);
+}
+
+void shootShot() {
+	stage->shootShot();
+}
+
+void moveEnemyRandom() {
+	stage->moveEnemyRandom();
+}
 
 using namespace AngelScript;
 void Regist(asIScriptEngine* engine) {
 	int r = 0;
 	r = engine->RegisterGlobalFunction("Vec2 getPlayerPosition()", asFUNCTION(getPlayerPosition), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("Vec2 getEnemyPosition()", asFUNCTION(getEnemyPosition), asCALL_CDECL); assert(r >= 0);
-	r = engine->RegisterGlobalFunction("Vec2 getBulletsPosition()", asFUNCTION(getBulletsPosition), asCALL_CDECL); assert(r >= 0);
-	r = engine->RegisterGlobalFunction("Vec2 getBulletsVelocity()", asFUNCTION(getBulletsVelocity), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("Vec2 getNearestBulletPosition()", asFUNCTION(getNearestBulletPosition), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("Vec2 getNearestBulletVelocity()", asFUNCTION(getNearestBulletVelocity), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("void movePlayer(int, int, bool)", asFUNCTIONPR(movePlayer, (int, int, bool), void), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("void shootShot()", asFUNCTION(shootShot), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("void moveEnemyRandom()", asFUNCTION(moveEnemyRandom), asCALL_CDECL); assert(r >= 0);
 }
 
 //

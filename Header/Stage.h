@@ -27,25 +27,30 @@ namespace stg {
 		Vec2 position;
 		Player* player;
 		Enemy* enemy;
-		Shot* shot[100];
-		Bullet* bullet[100];
+		Shot* shot[256];
+		Bullet* bullet[256];
 		Manager* manager;
 		Array<Object*> array;
 		int timing;
 		int timingRadical;
 		int interval;
+		int playerDamage;
+		int enemyDamage;
+		const Font disp{ FontMethod::MSDF, 30 };
 		Polygon flame;
 		struct AreaInfo areaInfo;
 	public:
 		Stage() = default;
 		Stage(Vec2, Vec2);
 		~Stage();
+		void update();
 		Vec2 getPlayerPosition();
 		Vec2 getEnemyPosition();
-		Array<Vec2> getBulletsPosition();
-		Array<Vec2> getBulletsVelocity();
+		Vec2 getNearestBulletPosition();
+		Vec2 getNearestBulletVelocity();
 		void movePlayer(int, int, bool);
-		void update();
+		void shootShot();
+		void moveEnemyRandom();
 		inline AreaInfo getAreaInfo() const {
 			return areaInfo;
 		}

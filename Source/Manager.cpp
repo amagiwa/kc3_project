@@ -24,6 +24,22 @@ void Manager::render(Array<Object*> obj) {
 	}
 }
 
+float Manager::lengthVector(Vec2 vec) {
+	return sqrt(vec.x * vec.x + vec.y * vec.y);
+}
+
+void Manager::normalizeVector(Vec2* vec) {
+	//float abs = sqrt(vec->x * vec->x + vec->y * vec->y);
+	float abs = lengthVector(*vec);
+	*vec /= abs;
+}
+
+void Manager::initializeObject(Object* object, Vec2 pos) {
+	object->setIsActive(true);
+	object->setPosition(pos);
+	//Print << U"a";
+}
+
 void Manager::collectObject(Object* obj) {
 	Vec2 pos = obj->getPosition();
 	/*if (pos.x<0 ||
@@ -46,14 +62,9 @@ void Manager::solvePosition(Object* obj) {
 	obj->setPosition(Vec2{ x,y });
 }
 
-bool Manager::checkCollision(HitBody* hbl, HitBody* hbr) {
-	return hbl->getHitBody().intersects(
-		hbr->getHitBody());
-}
-
-void Manager::randomMove(Character* c) {
-	// TODO: 実装
-	c->setVelocity(Vec2(Random(-5, 5), 1));
+bool Manager::checkCollision(HitBody hbl, HitBody hbr) {
+	return hbl.getHitBody().intersects(
+		hbr.getHitBody());
 }
 
 void Manager::movePlayer(Player* p, int hor, int ver, bool isShift) {
@@ -82,10 +93,10 @@ void Manager::movePlayer(Player* p, int hor, int ver, bool isShift) {
 	default:
 		break;
 	}
-	p->setVelocity(dPos);
+	p->setPosition(p->getPosition() + dPos);
 }
 
-void Manager::userMove(Player* p) {
+void Manager::moveUser(Player* p) {
 	Vec2 dPos = { 0,0 };
 	p->setVelocity(dPos);
 	int vl = 2;
@@ -113,64 +124,49 @@ void Manager::userMove(Player* p) {
 	p->setVelocity(dPos);
 }
 
-void Manager::shootShot(Player* p, Shot* s[]) {
-	for (auto i : step(sizeof s / sizeof s[0])) {
+bool Manager::moveToTarget(Object* obj, Vec2 tgt) {
+	static int vel = 2;
+	Vec2 dist = tgt - obj->getPosition();
+	if (lengthVector(dist) < 1) {
+		return true;
+	}
+	normalizeVector(&dist);
+	obj->setVelocity(vel * dist);
+	return false;
+}
+
+void Manager::randomMove(Character* c) {
+	// TODO: 実装
+	c->setVelocity(Vec2(Random(-5, 5), 1));
+}
+
+bool Manager::shootShot(Player* p, Shot* s[]) {
+	for (auto i : step(255/*sizeof s / sizeof s[0]*/)) {
 		if (!s[i]->getIsActive()) {
 			s[i]->setIsActive(true);
 			s[i]->setPosition(p->getPosition());
+			return true;
 		}
 	}
+	return false;
 }
 
-void Manager::objectInitialize(Object* object, Vec2 pos) {
-	object->setIsActive(true);
-	object->setPosition(pos);
-	//Print << U"a";
-}
-
-void Manager::objectDraw(Array<Object*> objects) {
-	for (auto i : step(objects.size())) {
-		if (objects[i]->getIsActive()) {
-			objects[i]->getTexture().draw(objects[i]->getColor());
-
+bool Manager::collideShotVsObject(Shot* s, Object* obj) {
+	if (checkCollision(s->getHitBody(), obj->getHitBody())) {
+		if (s->getIsActive()) {
+			//initializeObject(s, Vec2{ 0,0 });
+			s->setIsActive(false);
 		}
-	}
-}
-
-bool Manager::objectCollision(Object* object1, Object* object2) {
-	return (object1->getPosition().x - object2->getPosition().x) *
-		(object1->getPosition().x - object2->getPosition().x) +
-		(object1->getPosition().y - object2->getPosition().y) *
-		(object1->getPosition().y - object2->getPosition().y)
-		< (object1->getSize().y + object2->getSize().x) *
-		(object1->getSize().y + object2->getSize().x);
-}
-
-void Manager::objectMoveToTarget(Object* object, Vec2 targetPos) {
-	object->setVelocity((object->getPosition() - targetPos) / 10);
-}
-
-bool Manager::shotLaunch(Shot* shot, Object* object) {
-	if (!shot->getIsActive()) {
-		//Print << U"a";
-		objectInitialize(shot, object->getPosition());
 		return true;
 	}
 	return false;
 }
 
-void Manager::shotCollision(Shot* shot, Object* object) {
-	if (objectCollision(shot, object))
-	{
-		shot->setIsActive(false);
-	}
-}
-
-bool Manager::bulletLaunch(Bullet* bullet, Object* enemy, Object* player) {
+bool Manager::shootBullet(Bullet* bullet, Object* enemy, Object* player) {
 	if (!bullet->getIsActive()) {
-		objectInitialize(bullet, enemy->getPosition());
-		double y = player->getPosition().y - enemy->getPosition().y;
-		double x = player->getPosition().x - enemy->getPosition().x;
+		initializeObject(bullet, enemy->getPosition());
+		float y = player->getPosition().y - enemy->getPosition().y;
+		float x = player->getPosition().x - enemy->getPosition().x;
 		bullet->setVelocity(Vec2{
 						2 * x / sqrt(x * x + y * y),2 * y / sqrt(x * x + y * y) });
 		//Print << U"a";
@@ -179,12 +175,12 @@ bool Manager::bulletLaunch(Bullet* bullet, Object* enemy, Object* player) {
 	return false;
 }
 
-void Manager::bulletLaunchRadical(Bullet* bullet[], int bulletNum, Object* object) {
+void Manager::shootBulletRadical(Bullet* bullet[], int bulletNum, Object* object) {
 	int count = 0;
 	float rand = Random(0.0, 1.0) * Math::Pi / 4;
 	for (int i = 0; i < bulletNum; ++i) {
 		if (!bullet[i]->getIsActive()) {
-			objectInitialize(bullet[i], object->getPosition());
+			initializeObject(bullet[i], object->getPosition());
 			bullet[i]->setVelocity(Vec2{
 				cos(count * (Math::Pi / 4) + rand),sin((count * (Math::Pi / 4) + rand)) });
 			count++;
@@ -194,12 +190,42 @@ void Manager::bulletLaunchRadical(Bullet* bullet[], int bulletNum, Object* objec
 	}
 }
 
-void Manager::bulletCollision(Bullet* bullet, Object* object) {
-	if (bullet->getIsActive()) {
-		if (objectCollision(bullet, object)) {
-			bullet->Object::getTexture().drawAt(bullet->getPosition());
-			bullet->setVelocity(Vec2{ 0,0 });
-			bullet->setIsActive(false);
+bool Manager::collideBulletVsObject(Bullet* bul, Object* obj) {
+	if (bul->getIsActive()) {
+		if (checkCollision(bul->getHitBody(), obj->getHitBody())) {
+			//bul->Object::getTexture().drawAt(bul->getPosition());
+			bul->setVelocity(Vec2{ 0,0 });
+			bul->setIsActive(false);
+			return true;
 		}
 	}
+	return false;
+}
+
+//使わない
+void Manager::objectDraw(Array<Object*> objects) {
+	for (auto i : step(objects.size())) {
+		if (objects[i]->getIsActive()) {
+			objects[i]->getTexture().draw(objects[i]->getColor());
+
+		}
+	}
+}
+//使わない
+bool Manager::objectCollision(Object* object1, Object* object2) {
+	return (object1->getPosition().x - object2->getPosition().x) *
+		(object1->getPosition().x - object2->getPosition().x) +
+		(object1->getPosition().y - object2->getPosition().y) *
+		(object1->getPosition().y - object2->getPosition().y)
+		< (object1->getSize().y + object2->getSize().x) *
+		(object1->getSize().y + object2->getSize().x);
+}
+//使わない
+bool Manager::shotLaunch(Shot* shot, Object* object) {
+	if (!shot->getIsActive()) {
+		//Print << U"a";
+		initializeObject(shot, object->getPosition());
+		return true;
+	}
+	return false;
 }
